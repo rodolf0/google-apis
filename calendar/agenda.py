@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from os import path
 import argparse
 import httplib2
 from apitools.auth import getCredentials
@@ -37,21 +38,23 @@ def events(service, calendar, date=None):
       break
 
 
-def list_events(date=None):
-  c = getCredentials(".secrets/mysecrets.json", ".secrets/mytokens.dat",
+def list_events(secrets, date=None):
+  c = getCredentials(path.join(secrets, "mysecrets.json"),
+                     path.join(secrets, "mytokens.dat"),
                      "https://www.googleapis.com/auth/calendar")
   s = build("calendar", "v3", http=c.authorize(httplib2.Http()))
-  with open(".secrets/mycalendars.json") as calfile:
+  with open(path.join(secrets, "mycalendars.json")) as calfile:
     calendars = json.load(calfile)
   for cal in calendars.values():
     for e in events(s, cal, date):
       print("%s %s" % (e["start"].get("date") or e["start"].get("dateTime"), e["summary"]))
 
 
-if __name__ == '__main__':
+def main():
   def parse_cmdline():
     "parse commandline options"
     p = argparse.ArgumentParser(description="Calendar API test")
+    p.add_argument("--secrets", required=True, help="config/secrets dir")
     g = p.add_mutually_exclusive_group(required=True)
     g.add_argument("--all-events", action="store_true")
     g.add_argument("--today", action="store_true")
@@ -61,12 +64,14 @@ if __name__ == '__main__':
   args = parse_cmdline()
 
   if args.all_events:
-    list_events()
+    list_events(args.secrets)
   elif args.today:
-    list_events(date.today())
+    list_events(args.secrets, date.today())
   elif args.on:
-    list_events(datetime.strptime(args.on, '%Y-%m-%d').date())
+    list_events(args.secrets, datetime.strptime(args.on, '%Y-%m-%d').date())
 
 
+if __name__ == '__main__':
+  main()
 
 # vim: set sw=2 sts=2 : #

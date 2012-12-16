@@ -11,6 +11,12 @@ setup(
 
   include_package_data = True,
 
+  entry_points={
+    'console_scripts': [
+      'agenda = calendar.agenda:main'
+    ]
+  },
+
   author = "rodolfo granata",
   author_email = "warlock.cc@gmail.com",
   description = "google api tests",
